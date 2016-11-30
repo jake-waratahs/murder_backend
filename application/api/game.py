@@ -1,6 +1,7 @@
 # API endpoint for game management
 import json
 import dateutil.parser
+from datetime import datetime
 
 from flask import request, Response
 from flask_jwt import jwt_required
@@ -31,6 +32,20 @@ def get_game(id):
     return Response(data, status=200, mimetype="application/json")
 
 
+@app.route("/games/current", methods=["GET"])
+def current_game():
+    game = Game.query.filter(Game.start_date < datetime.now(), Game.end_date > datetime.now()).first_or_404()
+    data = json.dumps(game.serialize())
+    return Response(data, status=200, mimetype="application/json")
+
+
+@app.route("/games/upcoming", methods=["GET"])
+def upcoming_games():
+    games = Game.query.filter(Game.start_date < datetime.now())
+    data = json.dumps([game.serialize() for game in games])
+    return Response(data, status=200, mimetype="application/json")
+
+
 def get_all_games():
     games = json.dumps([game.serialize() for game in Game.query.all()])
     resp = Response(games, status=200, mimetype="application/json")
@@ -41,6 +56,10 @@ def new_game():
     request_data = request.get_json()
     if not ("start_date" in request_data and "end_date" in request_data):
         return craft_response(400, "Please ensure a start date and an end date are provided")
+
+    if "name" not in request_data:
+        return craft_response(400, "Please ensure a name is provided")
+    name = request_data["name"]
 
     # Get the start and end dates and convert them to datetime objects
     try:
@@ -54,7 +73,7 @@ def new_game():
         return craft_response(400, "Please ensure start date is before end date")
 
     #Create and add the game object
-    game = Game(start_date, end_date)
+    game = Game(name, start_date, end_date)
     db.session.add(game)
     db.session.commit()
     return craft_response(200, "New game created")
@@ -72,6 +91,7 @@ def modify_game():
 
     start_date = game.start_date
     end_date = game.end_date
+    name = game.name
 
     try:
         if "start_date" in request_data:
@@ -81,11 +101,15 @@ def modify_game():
             end_date = dateutil.parser.parse(request_data["end_date"])
     except:
         return craft_response(400, "Invalid date format")
-    
+
     # TODO: Fix this.
     # if start_date > end_date:
         # return craft_response(400, "Please ensure start date is before end date")
 
+    if "name" in request_data:
+        name = request_data["name"]
+
+    game.name = name
     game.start_date = start_date
     game.end_date = end_date
     db.session.commit()

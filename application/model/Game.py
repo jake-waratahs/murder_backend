@@ -3,11 +3,13 @@ from application.model import Player
 
 class Game(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
     winner_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
-    def __init__(self, start_date, end_date):
+    def __init__(self, name, start_date, end_date):
+        self.name = name
         self.start_date = start_date
         self.end_date = end_date
 
@@ -20,6 +22,7 @@ class Game(db.Model):
 
         return {
             "id": self.id,
+            "name": self.name,
             "start_date": self.start_date.isoformat(),
             "end_date": self.end_date.isoformat(),
             "winner": winner_name
