@@ -22,6 +22,15 @@ def games():
         return modify_game()
 
 
+@app.route("/games/<int:id>", methods=["GET"])
+@jwt_required()
+@admin_required
+def get_game(id):
+    game = Game.query.filter_by(id=id).first_or_404()
+    data = json.dumps(game.serialize())
+    return Response(data, status=200, mimetype="application/json")
+
+
 def get_all_games():
     games = json.dumps([game.serialize() for game in Game.query.all()])
     resp = Response(games, status=200, mimetype="application/json")

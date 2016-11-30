@@ -6,6 +6,7 @@ from application.model import Player
 from application.lib.ldap_auth import authenticate
 
 import json
+from functools import wraps
 
 def auth_handler(zid, zpass):
     name = authenticate(zid, zpass)
@@ -36,9 +37,10 @@ def id_handler(payload):
 
 # Function decorator that requires a user to be an admin
 def admin_required(func):
-    def func_wrapper():
+    @wraps(func)
+    def func_wrapper(*args, **kwargs):
         if current_identity.admin:
-            return func()
+            return func(*args, **kwargs)
         else:
             data = json.dumps({"status": 401, "message": "You must be an admin to perform this action"})
             return Response(data, status=401, mimetype="application/json")
