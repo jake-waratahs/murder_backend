@@ -19,3 +19,13 @@ class Player(db.Model):
         self.zid = zid
         self.full_name = full_name
         self.admin = admin
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "zid": self.zid,
+            "name": self.full_name,
+            "admin": self.admin,
+            "wins": len(self.winnings.all()),
+            "kills": len(self.kills)
+        }
