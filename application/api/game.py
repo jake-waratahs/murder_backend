@@ -11,7 +11,7 @@ from application.model import Game
 from application.lib.jwt import admin_required
 from application.lib.craft_response import craft_response
 
-@app.route("/games", methods=["GET", "POST", "PUT"])
+@app.route("/games", methods=["GET", "POST"])
 @jwt_required()
 @admin_required
 def games():
@@ -19,13 +19,19 @@ def games():
         return get_all_games()
     elif request.method == "POST":
         return new_game()
-    elif request.method == "PUT":
-        return modify_game()
 
 
-@app.route("/games/<int:id>", methods=["GET"])
+@app.route("/games/<int:id>", methods=["GET", "PUT"])
 @jwt_required()
 @admin_required
+def manage_game(id):
+    if request.method == "GET":
+        return get_game(id)
+    elif request.method == "PUT":
+        return modify_game(id)
+
+
+
 def get_game(id):
     game = Game.query.filter_by(id=id).first_or_404()
     data = json.dumps(game.serialize())
@@ -78,16 +84,10 @@ def new_game():
     db.session.commit()
     return craft_response(200, "New game created")
     
-def modify_game():
+def modify_game(id):
     request_data = request.get_json()
 
-    if "id" not in request_data:
-        return craft_response(400, "ID not provided")
-
-    game = Game.query.filter_by(id=request_data["id"]).first()
-
-    if game is None:
-        return craft_response(400, "Game does not exist")
+    game = Game.query.filter_by(id=id).first_or_404()
 
     start_date = game.start_date
     end_date = game.end_date

@@ -26,6 +26,6 @@ class Player(db.Model):
             "zid": self.zid,
             "name": self.full_name,
             "admin": self.admin,
-            "wins": len(self.winnings.all()),
+            "wins": [win.serialize() for win in self.winnings.all()],
             "kills": len(self.kills)
         }
